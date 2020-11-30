@@ -10,6 +10,7 @@ int battery = 0;
 
 void notify()
 {
+  // Runs on core 0
 
   //--- Digital cross/square/triangle/circle button events ---
   if (Ps3.event.button_down.cross)
@@ -220,34 +221,7 @@ void notify()
   }
 }
 
-void onConnect()
-{
-  Serial.println("Connected.");
-}
-
-void onDisconnect()
-{
-  Serial.println("Disconnected.");
-}
-
 GFX gfx = GFX(MATRIX_SIZE, MATRIX_SIZE);
-
-void draw(void *pvParameters)
-{
-  while (true)
-  {
-    Serial.print("Draw running on core ");
-    Serial.println(xPortGetCoreID());
-
-    for (int y = 0; y < 4; y++)
-    {
-      gfx.setPixel(0, y, CRGB::Red);
-      gfx.show();
-      delay(50);
-      gfx.setPixel(0, y, CRGB::Black);
-    }
-  }
-}
 
 void setup()
 {
@@ -258,19 +232,10 @@ void setup()
   gfx.init(100);
 
   Ps3.attach(notify);
-  Ps3.attachOnConnect(onConnect);
-  Ps3.attachOnDisconnect(onDisconnect);
-
   Ps3.begin(MAC_ADDRESS);
 
-  xTaskCreatePinnedToCore(
-      draw,       /* Task function. */
-      "DrawTask", /* name of task. */
-      4000,       /* Stack size of task */
-      NULL,       /* parameter of the task */
-      1,          /* priority of the task */
-      &DrawTask,  /* Task handle to keep track of created task */
-      0);         /* pin task to core 0 */
+  gfx.drawString("Well", 0, 0, CRGB::Red);
+  gfx.show();
 
   while (!Ps3.isConnected())
   {
@@ -280,9 +245,6 @@ void setup()
 
 void loop()
 {
-  Serial.print("Loop running on core ");
-  Serial.println(xPortGetCoreID());
-
   if (Ps3.isConnected())
   {
     Serial.println("Connected");
@@ -293,5 +255,5 @@ void loop()
     ESP.restart();
   }
 
-  delay(10);
+  delay(100);
 }
