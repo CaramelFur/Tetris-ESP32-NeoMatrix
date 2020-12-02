@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "pixeltypes.h"
+#include "FastLED.h"
 
 #pragma once
 
