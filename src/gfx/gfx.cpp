@@ -1,5 +1,7 @@
 #include "gfx.hpp"
 
+const CRGB black = CRGB::Black;
+
 // For drawing
 
 void GFX::drawString(char *str, uint8_t x, uint8_t y, CRGB color = CRGB::White)
@@ -131,6 +133,20 @@ void GFX::drawFilledSquare(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB 
       this->drawPixel(x, y, color);
     }
   }
+}
+
+CRGB GFX::getPixel(uint8_t x, uint8_t y)
+{
+  if (x < 0 || y < 0)
+    return CRGB::Black;
+  if (x >= this->width || y >= this->height)
+    return CRGB::Black;
+  return this->pixels[this->XY(x, y)];
+}
+
+bool GFX::getPixelIsSet(uint8_t x, uint8_t y)
+{
+  return this->getPixel(x, y) == black;
 }
 
 // Operational
