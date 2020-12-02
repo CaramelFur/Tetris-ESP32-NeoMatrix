@@ -19,11 +19,15 @@ void GFX::drawString(char *str, uint8_t x, uint8_t y, CRGB color = CRGB::White)
 
 void GFX::drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, CRGB color)
 {
-  return GFX::drawBitmap((uint8_t *)bitmap, width, height, x, y, color);
+  return this->drawBitmap(bitmap, width, height, x, y, 0, color);
 }
 
-void GFX::drawBitmap(uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, CRGB color = CRGB::White)
+void GFX::drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, int8_t rotate, CRGB color = CRGB::White)
 {
+  int8_t crotate = rotate % 4;
+  if (crotate < 0)
+    crotate += 4;
+
   for (uint8_t h = 0; h < height; h++)
   {
     for (uint8_t w = 0; w < width; w++)
@@ -31,9 +35,15 @@ void GFX::drawBitmap(uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, 
       uint8_t col = w / 8;
       uint8_t bit = 7 - (w % 8);
 
+      uint8_t dx = (crotate == 2 || crotate == 3) ? width - 1 - w : w;
+      uint8_t dy = (crotate == 1 || crotate == 2) ? height - 1 - h : h;
+
       if (bitmap[col * height + h] & (1 << bit))
       {
-        this->drawPixel(x + w, y + h, color);
+        if (crotate % 2 == 1)
+          this->drawPixel(y + dy, x + dx, color);
+        else
+          this->drawPixel(x + dx, y + dy, color);
       }
     }
   }

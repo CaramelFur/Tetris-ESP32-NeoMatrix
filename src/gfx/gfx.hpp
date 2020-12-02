@@ -14,7 +14,7 @@ public:
   void drawFilledSquare(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color);
 
   void drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, CRGB color);
-  void drawBitmap(uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, CRGB color);
+  void drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, int8_t rotate, CRGB color);
   void drawString(char *str, uint8_t x, uint8_t y, CRGB color);
 
   CRGB getPixel(uint8_t x, uint8_t y);
