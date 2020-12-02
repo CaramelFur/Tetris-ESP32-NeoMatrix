@@ -55,6 +55,7 @@ void GFX::fill(CRGB color)
   {
     this->pixels[i] = color;
   }
+  this->dirty = true;
 }
 
 void GFX::drawPixel(uint8_t x, uint8_t y, CRGB color)
@@ -64,6 +65,7 @@ void GFX::drawPixel(uint8_t x, uint8_t y, CRGB color)
   if (x >= this->width || y >= this->height)
     return;
   this->pixels[this->XY(x, y)] = color;
+  this->dirty = true;
 }
 
 void GFX::drawLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color)
@@ -164,6 +166,7 @@ bool GFX::getPixelIsSet(uint8_t x, uint8_t y)
 GFX::GFX(uint8_t width, uint8_t height) : width(width), height(height), ledCount(height * width)
 {
   this->pixels = new CRGB[ledCount];
+  this->dirty = true;
 }
 
 void GFX::init()
@@ -210,4 +213,9 @@ void GFX::setBrightness(uint8_t scale)
 void GFX::show()
 {
   FastLED.show();
+  this->dirty = false;
+}
+
+bool GFX::isDirty() {
+  return this->dirty;
 }

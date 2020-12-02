@@ -30,10 +30,14 @@ public:
   void setBrightness(uint8_t scale);
   void show();
 
+  bool isDirty();
+
   CRGB *pixels;
 
 private:
   uint16_t XY(uint8_t x, uint8_t y);
+
+  bool dirty = false;
 
   const uint8_t width;
   const uint8_t height;
