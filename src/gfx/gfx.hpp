@@ -15,7 +15,8 @@ public:
 
   void drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, CRGB color);
   void drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, int8_t rotate, CRGB color);
-  void drawString(char *str, uint8_t x, uint8_t y, CRGB color);
+  void drawString(const char *str, uint8_t x, uint8_t y, CRGB color);
+  void drawChar(char chr, uint8_t x, uint8_t y, CRGB color);
 
   CRGB getPixel(uint8_t x, uint8_t y);
   bool getPixelIsSet(uint8_t x, uint8_t y);

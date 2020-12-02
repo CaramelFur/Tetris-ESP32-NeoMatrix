@@ -4,17 +4,20 @@ const CRGB black = CRGB::Black;
 
 // For drawing
 
-void GFX::drawString(char *str, uint8_t x, uint8_t y, CRGB color = CRGB::White)
+void GFX::drawString(const char *str, uint8_t x, uint8_t y, CRGB color = CRGB::White)
 {
   uint8_t i = 0;
   while (i < 255 && str[i] != 0)
   {
-    uint8_t findex = str[i] - 32;
-    Serial.print("Findex: ");
-    Serial.println(findex);
-    this->drawBitmap((uint8_t *)font[findex], fontW, fontH, x + (i * (fontW)), y, color);
+    this->drawChar(str[i], x + (i * (fontW)), y, color);
     i++;
   }
+}
+
+void GFX::drawChar(char chr, uint8_t x, uint8_t y, CRGB color)
+{
+  uint8_t findex = chr - 32;
+  this->drawBitmap((uint8_t *)font[findex], fontW, fontH, x, y, color);
 }
 
 void GFX::drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, CRGB color)
@@ -216,6 +219,7 @@ void GFX::show()
   this->dirty = false;
 }
 
-bool GFX::isDirty() {
+bool GFX::isDirty()
+{
   return this->dirty;
 }

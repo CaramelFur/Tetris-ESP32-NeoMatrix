@@ -2,7 +2,7 @@
 
 TaskHandle_t DrawTask;
 
-GFX gfx = GFX(MATRIX_SIZE, MATRIX_SIZE);
+GFX graphics = GFX(MATRIX_SIZE, MATRIX_SIZE);
 
 void setup()
 {
@@ -10,29 +10,20 @@ void setup()
   Serial.begin(115200);
   Serial.println("Hello");
 
-  gfx.init(50);
+  graphics.init(50);
 
-  Ps3.begin(MAC_ADDRESS);
+  Ps3.begin((char *)MAC_ADDRESS);
   delay(200);
 
   waitForConnect();
 
-  gfx.clear();
-  gfx.drawLine(8, 0, 8, 15, CRGB::White);
-  gfx.show();
+  Serial.println("Successfully connected to controller, starting game!");
+
+  StartGame(&graphics);
 }
 
 void loop()
 {
-  if (Ps3.isConnected())
-  {
-    Serial.println("Connected");
-  }
-  else
-  {
-    Serial.println("Disconnected");
-  }
-
   delay(100);
 }
 
@@ -43,11 +34,11 @@ void waitForConnect()
   while (!Ps3.isConnected())
   {
     anim = !anim;
-    gfx.clear();
+    graphics.clear();
     if (anim)
-      gfx.drawString("?", 6, 0, CRGB::White);
-    gfx.drawBitmap(controller_bmp, 16, 9, 0, 6, CRGB::White);
-    gfx.show();
+      graphics.drawChar('?', 6, 0, CRGB::White);
+    graphics.drawBitmap(controller_bmp, 16, 9, 0, 6, CRGB::White);
+    graphics.show();
 
     delay(500);
   }
