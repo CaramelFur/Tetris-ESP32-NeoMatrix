@@ -15,8 +15,9 @@ void setup()
   Ps3.begin((char *)MAC_ADDRESS);
   delay(200);
 
-  graphics.fill(CRGB(0x00010101));
+  graphics.fill(CRGB::Gray);
   graphics.show();
+  //delay(5000);
   graphics.clear();
   graphics.show();
 

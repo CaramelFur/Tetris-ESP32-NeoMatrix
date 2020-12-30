@@ -35,8 +35,11 @@ void StartGame(GFX *graphics)
 
     frame++;
 
-    if (frame % TICKSPEED == 0)
+    if (frame % TICKSPEED == 0){
       second++;
+      Serial.print("Mem: ");
+      Serial.println(ESP.getFreeHeap());
+    }
 
     while (esp_timer_get_time() < prevLoop + TICKDELAY)
     {
@@ -46,10 +49,34 @@ void StartGame(GFX *graphics)
   }
 }
 
+void Restart()
+{
+  gameOver = false;
+
+  memset(playfield, 0, PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
+  presslength = Presslength{
+      0,
+      0,
+      0,
+      0,
+  };
+
+  delete nextTetromino.bitmap;
+  nextTetromino = {0};
+  GetNextTetromino();
+}
+
 void GameLoop(uint64_t frame, uint32_t second)
 {
-  if (!Ps3.isConnected() || gameOver)
+  if (!Ps3.isConnected())
     return;
+
+  if (gameOver)
+  {
+    if (Ps3.data.button.start)
+      Restart();
+    return;
+  }
 
   HandleInput(frame);
 
@@ -138,9 +165,11 @@ void GetNextTetromino()
 {
   Tetromino toCurrentTetromino;
   if (nextTetromino.name == 0)
-    toCurrentTetromino = tetrominos[esp_random() % TETROMINO_COUNT];
-  else
+    toCurrentTetromino = CreateClone(tetrominos[esp_random() % TETROMINO_COUNT]);
+  else{
     toCurrentTetromino = nextTetromino;
+    delete currentTetromino.matrix.bitmap;
+  }
 
   pos_int_t col = PLAYFIELD_WIDTH / 2 - (toCurrentTetromino.size / 2 + toCurrentTetromino.size % 2);
   pos_int_t row = toCurrentTetromino.name == 'I' ? -1 : -2;
@@ -151,7 +180,7 @@ void GetNextTetromino()
       .y = row,
   };
 
-  nextTetromino = tetrominos[esp_random() % TETROMINO_COUNT];
+  nextTetromino = CreateClone(tetrominos[esp_random() % TETROMINO_COUNT]);
 };
 
 // Dont forget to delete the returned value eventually
@@ -232,6 +261,15 @@ bool PlaceTetromino()
   return false;
 }
 
+Tetromino CreateClone(Tetromino tetromino){
+  Tetromino newTetromino = tetromino;
+  
+  newTetromino.bitmap = new uint8_t[tetromino.size * tetromino.size];
+  memcpy(newTetromino.bitmap, tetromino.bitmap, tetromino.size * tetromino.size);
+
+  return newTetromino;
+}
+
 void Draw(uint32_t second)
 {
   gfx->clear();
@@ -260,6 +298,7 @@ void DrawPlayField()
       gfx->drawPixel(x, y, TetrisColorMap[playfield[x][y]]);
 
   gfx->drawLine(PLAYFIELD_WIDTH, 0, PLAYFIELD_WIDTH, PLAYFIELD_HEIGHT - 1, CRGB::White);
+  gfx->drawLine(PLAYFIELD_WIDTH, 5, MATRIX_SIZE - 1, 4, CRGB::White);
 }
 
 void DrawCurrentTetromino()
@@ -289,7 +328,7 @@ void DrawCurrentTetromino()
       {
         gfx->drawPixel(
             nextTetrominoOffset + x,
-            y,
+            1 + y,
             TetrisColorMap[color]);
       }
     }

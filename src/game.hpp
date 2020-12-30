@@ -25,13 +25,15 @@ struct Presslength {
 };
 
 void StartGame(GFX *graphics);
-
+void Restart();
 void GameLoop(uint64_t frame, uint32_t second);
 void HandleInput(uint64_t frame);
 void GetNextTetromino();
 uint8_t * RotateCurrentTetromino();
 bool IsValidMove(Tetromino* matrix, pos_int_t x, pos_int_t y);
 bool PlaceTetromino();
+
+Tetromino CreateClone(Tetromino tetromino);
 
 void Draw(uint32_t second);
 void DrawPlayField();
