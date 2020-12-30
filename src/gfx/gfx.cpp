@@ -4,7 +4,7 @@ const CRGB black = CRGB::Black;
 
 // For drawing
 
-void GFX::drawString(const char *str, uint8_t x, uint8_t y, CRGB color = CRGB::White)
+void GFX::drawString(const char *str, pos_int_t x, pos_int_t y, CRGB color = CRGB::White)
 {
   uint8_t i = 0;
   while (i < 255 && str[i] != 0)
@@ -14,18 +14,18 @@ void GFX::drawString(const char *str, uint8_t x, uint8_t y, CRGB color = CRGB::W
   }
 }
 
-void GFX::drawChar(char chr, uint8_t x, uint8_t y, CRGB color)
+void GFX::drawChar(char chr, pos_int_t x, pos_int_t y, CRGB color)
 {
   uint8_t findex = chr - 32;
   this->drawBitmap((uint8_t *)font[findex], fontW, fontH, x, y, color);
 }
 
-void GFX::drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, CRGB color)
+void GFX::drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, pos_int_t x, pos_int_t y, CRGB color)
 {
   return this->drawBitmap(bitmap, width, height, x, y, 0, color);
 }
 
-void GFX::drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, int8_t rotate, CRGB color = CRGB::White)
+void GFX::drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, pos_int_t x, pos_int_t y, int8_t rotate, CRGB color = CRGB::White)
 {
   int8_t crotate = rotate % 4;
   if (crotate < 0)
@@ -61,7 +61,7 @@ void GFX::fill(CRGB color)
   this->dirty = true;
 }
 
-void GFX::drawPixel(uint8_t x, uint8_t y, CRGB color)
+void GFX::drawPixel(pos_int_t x, pos_int_t y, CRGB color)
 {
   if (x < 0 || y < 0)
     return;
@@ -71,20 +71,20 @@ void GFX::drawPixel(uint8_t x, uint8_t y, CRGB color)
   this->dirty = true;
 }
 
-void GFX::drawLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color)
+void GFX::drawLine(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y2, CRGB color)
 {
-  int16_t dx = x2 - x1;
-  int16_t dy = y2 - y1;
+  pos_int_t dx = x2 - x1;
+  pos_int_t dy = y2 - y1;
   bool dir = dx > dy;
 
   double M = dir ? dy / dx : dx / dy;
 
-  int16_t steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
+  pos_int_t steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
 
   double cx = dir ? x1 : y1;
   double cy = dir ? y1 : x1;
 
-  for (int16_t s = 0; s <= steps; s++)
+  for (pos_int_t s = 0; s <= steps; s++)
   {
     if (dir)
     {
@@ -113,44 +113,44 @@ void GFX::drawLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color)
   }
 }
 
-void GFX::drawOutlinedSquare(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color)
+void GFX::drawOutlinedSquare(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y2, CRGB color)
 {
-  uint8_t xs = (x1 > x2) ? x2 : x1;
-  uint8_t xl = (x1 > x2) ? x1 : x2;
+  pos_int_t xs = (x1 > x2) ? x2 : x1;
+  pos_int_t xl = (x1 > x2) ? x1 : x2;
 
-  uint8_t ys = (y1 > y2) ? y2 : y1;
-  uint8_t yl = (y1 > y2) ? y1 : y2;
+  pos_int_t ys = (y1 > y2) ? y2 : y1;
+  pos_int_t yl = (y1 > y2) ? y1 : y2;
 
-  for (uint8_t x = xs; x < xl; x++)
+  for (pos_int_t x = xs; x < xl; x++)
   {
     this->drawPixel(x, ys, color);
     this->drawPixel(x, yl, color);
   }
-  for (uint8_t y = ys; y < yl; y++)
+  for (pos_int_t y = ys; y < yl; y++)
   {
     this->drawPixel(xs, y, color);
     this->drawPixel(xl, y, color);
   }
 }
 
-void GFX::drawFilledSquare(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color)
+void GFX::drawFilledSquare(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y2, CRGB color)
 {
-  uint8_t xs = (x1 > x2) ? x2 : x1;
-  uint8_t xl = (x1 > x2) ? x1 : x2;
+  pos_int_t xs = (x1 > x2) ? x2 : x1;
+  pos_int_t xl = (x1 > x2) ? x1 : x2;
 
-  uint8_t ys = (y1 > y2) ? y2 : y1;
-  uint8_t yl = (y1 > y2) ? y1 : y2;
+  pos_int_t ys = (y1 > y2) ? y2 : y1;
+  pos_int_t yl = (y1 > y2) ? y1 : y2;
 
-  for (uint8_t x = xs; x < xl; x++)
+  for (pos_int_t x = xs; x < xl; x++)
   {
-    for (uint8_t y = ys; y < yl; y++)
+    for (pos_int_t y = ys; y < yl; y++)
     {
       this->drawPixel(x, y, color);
     }
   }
 }
 
-CRGB GFX::getPixel(uint8_t x, uint8_t y)
+CRGB GFX::getPixel(pos_int_t x, pos_int_t y)
 {
   if (x < 0 || y < 0)
     return CRGB::Black;
@@ -159,7 +159,7 @@ CRGB GFX::getPixel(uint8_t x, uint8_t y)
   return this->pixels[this->XY(x, y)];
 }
 
-bool GFX::getPixelIsSet(uint8_t x, uint8_t y)
+bool GFX::getPixelIsSet(pos_int_t x, pos_int_t y)
 {
   return this->getPixel(x, y) == black;
 }
@@ -191,7 +191,7 @@ void GFX::clear()
   this->fill(CRGB::Black);
 }
 
-uint16_t GFX::XY(uint8_t x, uint8_t y)
+uint16_t GFX::XY(pos_int_t x, pos_int_t y)
 {
   uint8_t reverseY = (this->height - 1) - y;
 

@@ -4,22 +4,24 @@
 
 #pragma once
 
+typedef int16_t pos_int_t;
+
 class GFX
 {
 public:
   void fill(CRGB color);
-  void drawPixel(uint8_t x, uint8_t y, CRGB color);
-  void drawLine(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color);
-  void drawOutlinedSquare(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color);
-  void drawFilledSquare(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, CRGB color);
+  void drawPixel(pos_int_t x, pos_int_t y, CRGB color);
+  void drawLine(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y2, CRGB color);
+  void drawOutlinedSquare(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y2, CRGB color);
+  void drawFilledSquare(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y2, CRGB color);
 
-  void drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, CRGB color);
-  void drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, uint8_t x, uint8_t y, int8_t rotate, CRGB color);
-  void drawString(const char *str, uint8_t x, uint8_t y, CRGB color);
-  void drawChar(char chr, uint8_t x, uint8_t y, CRGB color);
+  void drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, pos_int_t x, pos_int_t y, CRGB color);
+  void drawBitmap(const uint8_t *bitmap, uint8_t width, uint8_t height, pos_int_t x, pos_int_t y, int8_t rotate, CRGB color);
+  void drawString(const char *str, pos_int_t x, pos_int_t y, CRGB color);
+  void drawChar(char chr, pos_int_t x, pos_int_t y, CRGB color);
 
-  CRGB getPixel(uint8_t x, uint8_t y);
-  bool getPixelIsSet(uint8_t x, uint8_t y);
+  CRGB getPixel(pos_int_t x, pos_int_t y);
+  bool getPixelIsSet(pos_int_t x, pos_int_t y);
 
   GFX(uint8_t width, uint8_t height);
 
@@ -36,7 +38,7 @@ public:
   CRGB *pixels;
 
 private:
-  uint16_t XY(uint8_t x, uint8_t y);
+  uint16_t XY(pos_int_t x, pos_int_t y);
 
   bool dirty = false;
 

@@ -15,6 +15,11 @@ void setup()
   Ps3.begin((char *)MAC_ADDRESS);
   delay(200);
 
+  graphics.fill(CRGB(0x00010101));
+  graphics.show();
+  graphics.clear();
+  graphics.show();
+
   waitForConnect();
 
   Serial.println("Successfully connected to controller, starting game!");

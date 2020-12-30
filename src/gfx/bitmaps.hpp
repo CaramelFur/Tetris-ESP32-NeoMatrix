@@ -3,14 +3,17 @@
 
 #pragma once
 
-struct TetrisPiece
+struct Tetromino
 {
+  char name;
   uint8_t size;
-  CRGB color;
-  uint8_t* bitmap;
+  uint8_t *bitmap;
 };
+
+#define TETROMINO_COUNT 7
 
 extern const uint8_t controller_bmp[];
 
-extern const TetrisPiece tetris_pieces[];
+extern const Tetromino tetrominos[];
 
+extern const CRGB TetrisColorMap[];

@@ -23,75 +23,87 @@ const uint8_t controller_bmp[] = {
     0b11100010,
     0b00011100};
 
-const TetrisPiece tetris_pieces[] = {
+const Tetromino tetrominos[TETROMINO_COUNT] = {
     // O piece
     {
+        .name = 'O',
         .size = 2,
-        .color = CRGB::Yellow,
         .bitmap = (uint8_t[]){
-            0b11000000,
-            0b11000000,
+            1, 1, //
+            1, 1, //
         },
     },
     // S piece
     {
+        .name = 'S',
         .size = 3,
-        .color = CRGB::Green,
         .bitmap = (uint8_t[]){
-            0b01100000,
-            0b11000000,
-            0b00000000,
+            0, 2, 2, //
+            2, 2, 0, //
+            0, 0, 0, //
         },
     },
     // Z piece
     {
+        .name = 'Z',
         .size = 3,
-        .color = CRGB::Red,
         .bitmap = (uint8_t[]){
-            0b11000000,
-            0b01100000,
-            0b00000000,
+            3, 3, 0, //
+            0, 3, 3, //
+            0, 0, 0, //
         },
     },
     // T piece
     {
+        .name = 'T',
         .size = 3,
-        .color = CRGB::Purple,
         .bitmap = (uint8_t[]){
-            0b01000000,
-            0b11100000,
-            0b00000000,
+            0, 4, 0, //
+            4, 4, 4, //
+            0, 0, 0, //
         },
     },
     // L piece
     {
+        .name = 'L',
         .size = 3,
-        .color = CRGB::Orange,
         .bitmap = (uint8_t[]){
-            0b00100000,
-            0b11100000,
-            0b00000000,
+            0, 0, 5, //
+            5, 5, 5, //
+            0, 0, 0, //
         },
     },
     // J piece
     {
+        .name = 'J',
         .size = 3,
-        .color = CRGB::Blue,
         .bitmap = (uint8_t[]){
-            0b10000000,
-            0b11100000,
-            0b00000000,
+            6, 0, 0, //
+            6, 6, 6, //
+            0, 0, 0, //
         },
     },
     // I piece
     {
+        .name = 'I',
         .size = 4,
-        .color = CRGB::Cyan,
         .bitmap = (uint8_t[]){
-            0b00000000,
-            0b11110000,
-            0b00000000,
-            0b00000000,
+            0, 0, 0, 0, //
+            7, 7, 7, 7, //
+            0, 0, 0, 0, //
+            0, 0, 0, 0, //
         },
     },
+};
+
+const CRGB TetrisColorMap[TETROMINO_COUNT + 1] = {
+    CRGB::Black,
+    CRGB::Yellow,
+    CRGB::Green,
+    CRGB::Red,
+
+    CRGB::Purple,
+    CRGB::OrangeRed,
+    CRGB::Blue,
+    CRGB::Cyan,
 };
