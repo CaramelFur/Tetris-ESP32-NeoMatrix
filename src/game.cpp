@@ -1,6 +1,7 @@
 #include "game.hpp"
 
 GFX *gfx = nullptr;
+Tetromino nextTetromino = {0};
 CurrentTetromino currentTetromino;
 
 Presslength presslength = Presslength{
@@ -135,16 +136,22 @@ void HandleInput(uint64_t frame)
 
 void GetNextTetromino()
 {
-  Tetromino nextTetromino = tetrominos[esp_random() % TETROMINO_COUNT];
+  Tetromino toCurrentTetromino;
+  if (nextTetromino.name == 0)
+    toCurrentTetromino = tetrominos[esp_random() % TETROMINO_COUNT];
+  else
+    toCurrentTetromino = nextTetromino;
 
-  pos_int_t col = PLAYFIELD_WIDTH / 2 - (nextTetromino.size / 2 + nextTetromino.size % 2);
-  pos_int_t row = nextTetromino.name == 'I' ? -1 : -2;
+  pos_int_t col = PLAYFIELD_WIDTH / 2 - (toCurrentTetromino.size / 2 + toCurrentTetromino.size % 2);
+  pos_int_t row = toCurrentTetromino.name == 'I' ? -1 : -2;
 
   currentTetromino = CurrentTetromino{
-      .matrix = nextTetromino,
+      .matrix = toCurrentTetromino,
       .x = col,
       .y = row,
   };
+
+  nextTetromino = tetrominos[esp_random() % TETROMINO_COUNT];
 };
 
 // Dont forget to delete the returned value eventually
@@ -267,6 +274,22 @@ void DrawCurrentTetromino()
         gfx->drawPixel(
             currentTetromino.x + x,
             currentTetromino.y + y,
+            TetrisColorMap[color]);
+      }
+    }
+  }
+
+  pos_int_t nextTetrominoOffset = ((MATRIX_SIZE - PLAYFIELD_WIDTH - 1) / 2 - nextTetromino.size / 2) + PLAYFIELD_WIDTH + 1;
+  for (pos_int_t x = 0; x < nextTetromino.size; x++)
+  {
+    for (pos_int_t y = 0; y < nextTetromino.size; y++)
+    {
+      uint8_t color = nextTetromino.bitmap[y * nextTetromino.size + x];
+      if (color != 0)
+      {
+        gfx->drawPixel(
+            nextTetrominoOffset + x,
+            y,
             TetrisColorMap[color]);
       }
     }
