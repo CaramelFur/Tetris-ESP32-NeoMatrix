@@ -22,15 +22,30 @@ void InitAudio()
   effectPlayer.volume(DEFAULT_VOLUME);
 }
 
-void StartMusic(MUSIC music){
+void StartMusic(MUSIC music)
+{
+  musicPlayer.disableLoop();
   musicPlayer.playFolder(1, music);
   musicPlayer.enableLoop();
 }
 
-void StopMusic(){
+void PauseMusic()
+{
+  musicPlayer.pause();
+}
+
+void StartMusic()
+{
+  musicPlayer.start();
+  musicPlayer.enableLoop();
+}
+
+void StopMusic()
+{
   musicPlayer.stop();
 }
 
-void PlayEffect(EFFECT effect){
+void PlayEffect(EFFECT effect)
+{
   effectPlayer.playFolder(1, effect);
 }

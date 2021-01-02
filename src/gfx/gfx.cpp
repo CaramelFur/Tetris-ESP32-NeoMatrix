@@ -94,8 +94,6 @@ void GFX::drawLine(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y2, CRGB 
     return;
   }
 
-  Serial.println("Slow");
-
   pos_int_t dx = x2 - x1;
   pos_int_t dy = y2 - y1;
   bool dir = dx > dy;
@@ -164,9 +162,9 @@ void GFX::drawFilledSquare(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y
   pos_int_t ys = (y1 > y2) ? y2 : y1;
   pos_int_t yl = (y1 > y2) ? y1 : y2;
 
-  for (pos_int_t x = xs; x < xl; x++)
+  for (pos_int_t x = xs; x <= xl; x++)
   {
-    for (pos_int_t y = ys; y < yl; y++)
+    for (pos_int_t y = ys; y <= yl; y++)
     {
       this->drawPixel(x, y, color);
     }

@@ -5,6 +5,7 @@
 #include "gfx/bitmaps.hpp"
 #include "Ps3Controller.h"
 #include "audio.hpp"
+#include "highscore.hpp"
 
 #include "game.hpp"
 
@@ -30,11 +31,14 @@ Presslength presslength = Presslength{
     0,
     0,
     0,
+    0,
+    0,
 };
 
 uint8_t playfield[PLAYFIELD_WIDTH][PLAYFIELD_HEIGHT] = {0};
 
 bool gameOver = false;
+bool paused = false;
 uint32_t waitFrames = 0;
 
 uint16_t clearedLines = 0;
@@ -50,6 +54,7 @@ void StartGame(GFX *graphics)
   uint32_t second = 0;
 
   GetNextTetromino();
+  GetHighScore();
 
   StartMusic(MUSIC::main);
 
@@ -84,6 +89,7 @@ void StartGame(GFX *graphics)
 void Restart()
 {
   gameOver = false;
+  paused = false;
   waitFrames = 0;
 
   clearedLines = 0;
@@ -102,22 +108,24 @@ void Restart()
   nextTetromino = {0};
 
   GetNextTetromino();
+  GetHighScore();
+  StopMusic();
+  delay(50);
   StartMusic(MUSIC::main);
 }
 
 void GameLoop(uint64_t frame, uint32_t second)
 {
   if (!Ps3.isConnected())
-    return;
-
-  if (gameOver)
   {
-    if (Ps3.data.button.start)
-      Restart();
-    return;
+    paused = true;
+    PauseMusic();
   }
 
-  HandleInput(frame);
+  HandleInput(frame, !gameOver && !paused);
+
+  if (gameOver || paused)
+    return;
 
   if (frame % (GetGravitySpeed(GetLevel(clearedLines))) == 0)
   {
@@ -130,12 +138,53 @@ void GameLoop(uint64_t frame, uint32_t second)
 
       StopMusic();
       PlayEffect(EFFECT::game_over);
+
+      UpdateHighScore(score);
     }
   }
 }
 
-void HandleInput(uint64_t frame)
+void HandleInput(uint64_t frame, bool doGame)
 {
+
+  if (Ps3.data.button.start)
+  {
+    if (presslength.start == 0)
+    {
+      if (gameOver)
+        return Restart();
+      else
+        paused = !paused;
+
+      if (paused)
+        PauseMusic();
+      else
+        StartMusic();
+    }
+    presslength.start++;
+  }
+  else
+  {
+    presslength.start = 0;
+  }
+
+  if (Ps3.data.button.select)
+  {
+    if (presslength.select > 10 * TICKSPEED)
+    {
+      ResetHighScore();
+      return Restart();
+    }
+    presslength.select++;
+  }
+  else
+  {
+    presslength.select = 0;
+  }
+
+  if (!doGame)
+    return;
+
   if (Ps3.data.button.left)
   {
     if (presslength.left % INPUTSPEED == 0 && IsValidMove(&currentTetromino.matrix, currentTetromino.x - 1, currentTetromino.y))
@@ -362,6 +411,9 @@ void Draw(uint32_t second)
 
   DrawScores();
 
+  if (paused)
+    gfx->drawFilledSquare(MATRIX_SIZE - 2, 0, MATRIX_SIZE - 1, 1, second % 2 ? CRGB::Yellow : CRGB::Blue);
+
   // Keepalive pixel
   gfx->drawPixel(PLAYFIELD_WIDTH, MATRIX_SIZE - 1, second % 2 ? CRGB::White : CRGB::Gray);
 
@@ -373,9 +425,8 @@ void DrawPlayField()
 {
   if (gameOver)
   {
-    Serial.println("Go!");
     gfx->drawLine(0, 0, PLAYFIELD_WIDTH - 1, PLAYFIELD_HEIGHT - 1, CRGB::Red);
-    gfx->drawLine(0, PLAYFIELD_HEIGHT - 1, PLAYFIELD_WIDTH - 1, 0, CRGB::Red);
+    gfx->drawLine(PLAYFIELD_WIDTH - 1, 0, 0, PLAYFIELD_HEIGHT - 1, CRGB::Red);
   }
   else
   {
@@ -394,16 +445,22 @@ void DrawPlayField()
 
 void DrawScores()
 {
-  uint32_t tempScore = score;
+  uint32_t tempHighScore = CurrentHighScore;
+  uint8_t i = 0;
+  while (tempHighScore > 0)
+  {
+    gfx->drawLine(MATRIX_SIZE - 1 - i, MATRIX_SIZE, MATRIX_SIZE - 1 - i, MATRIX_SIZE - (tempHighScore % 10), CRGB::Magenta);
+    tempHighScore = tempHighScore / 10;
+    i++;
+  }
 
+  uint32_t tempScore = score;
   if (tempScore > 9999999)
     tempScore = 9999999;
-
-  uint8_t i = 0;
-
+  i = 0;
   while (tempScore > 0)
   {
-    gfx->drawLine(MATRIX_SIZE - 1 - i, MATRIX_SIZE, MATRIX_SIZE - 1 - i, MATRIX_SIZE - (tempScore % 10), CRGB::LawnGreen);
+    gfx->drawLine(MATRIX_SIZE - 1 - i, MATRIX_SIZE, MATRIX_SIZE - 1 - i, MATRIX_SIZE - (tempScore % 10), (score > CurrentHighScore) ? CRGB::Gold : CRGB::LawnGreen);
     tempScore = tempScore / 10;
     i++;
   }

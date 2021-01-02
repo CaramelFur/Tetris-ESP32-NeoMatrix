@@ -30,3 +30,5 @@ void InitAudio();
 void StartMusic(MUSIC music);
 void StopMusic();
 void PlayEffect(EFFECT effect);
+void PauseMusic();
+void StartMusic();
