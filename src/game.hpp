@@ -1,10 +1,4 @@
 #include <Arduino.h>
-#include <esp_timer.h>
-
-#include "defines.hpp"
-#include "gfx/gfx.hpp"
-#include "gfx/bitmaps.hpp"
-#include "Ps3Controller.h"
 
 #pragma once
 
@@ -18,10 +12,10 @@ struct CurrentTetromino
 };
 
 struct Presslength {
-  uint32_t left;
-  uint32_t right;
-  uint32_t spin;
-  uint32_t down;
+  int32_t left;
+  int32_t right;
+  int32_t spin;
+  int32_t down;
 };
 
 void StartGame(GFX *graphics);
@@ -38,3 +32,7 @@ Tetromino CreateClone(Tetromino tetromino);
 void Draw(uint32_t second);
 void DrawPlayField();
 void DrawCurrentTetromino();
+void DrawScores();
+
+uint16_t GetLevel(uint32_t linesCleared);
+uint8_t GetGravitySpeed(uint16_t level);

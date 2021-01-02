@@ -73,11 +73,34 @@ void GFX::drawPixel(pos_int_t x, pos_int_t y, CRGB color)
 
 void GFX::drawLine(pos_int_t x1, pos_int_t y1, pos_int_t x2, pos_int_t y2, CRGB color)
 {
+  if (y1 == y2)
+  {
+    pos_int_t from = (x1 < x2) ? x1 : x2;
+    pos_int_t to = (x1 < x2) ? x2 : x1;
+    for (pos_int_t x = from; x <= to; x++)
+    {
+      this->drawPixel(x, y1, color);
+    }
+    return;
+  }
+  if (x1 == x2)
+  {
+    pos_int_t from = (y1 < y2) ? y1 : y2;
+    pos_int_t to = (y1 < y2) ? y2 : y1;
+    for (pos_int_t y = from; y <= to; y++)
+    {
+      this->drawPixel(x1, y, color);
+    }
+    return;
+  }
+
+  Serial.println("Slow");
+
   pos_int_t dx = x2 - x1;
   pos_int_t dy = y2 - y1;
   bool dir = dx > dy;
 
-  double M = dir ? dy / dx : dx / dy;
+  double M = dir ? (double)dy / (double)dx : (double)dx / (double)dy;
 
   pos_int_t steps = (abs(dx) > abs(dy)) ? abs(dx) : abs(dy);
 

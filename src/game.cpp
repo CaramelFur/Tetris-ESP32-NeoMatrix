@@ -1,4 +1,25 @@
+#include <esp_timer.h>
+
+#include "defines.hpp"
+#include "gfx/gfx.hpp"
+#include "gfx/bitmaps.hpp"
+#include "Ps3Controller.h"
+#include "audio.hpp"
+
 #include "game.hpp"
+
+const uint16_t PointsPerLineCombo[] = {
+    40,
+    100,
+    300,
+    1200,
+};
+
+const CRGB levelColors[] = {
+    CRGB::LimeGreen,
+    CRGB::Yellow,
+    CRGB::DarkRed,
+};
 
 GFX *gfx = nullptr;
 Tetromino nextTetromino = {0};
@@ -14,6 +35,11 @@ Presslength presslength = Presslength{
 uint8_t playfield[PLAYFIELD_WIDTH][PLAYFIELD_HEIGHT] = {0};
 
 bool gameOver = false;
+uint32_t waitFrames = 0;
+
+uint16_t clearedLines = 0;
+uint32_t score = 0;
+uint8_t softDropCounter = 0;
 
 void StartGame(GFX *graphics)
 {
@@ -25,17 +51,23 @@ void StartGame(GFX *graphics)
 
   GetNextTetromino();
 
+  StartMusic(MUSIC::main);
+
   while (true)
   {
     //Serial.println(((uint32_t)frame));
     // TODO: add pause feature
 
-    GameLoop(frame, second);
+    if (waitFrames == 0)
+      GameLoop(frame, second);
+    else
+      waitFrames--;
     Draw(second);
 
     frame++;
 
-    if (frame % TICKSPEED == 0){
+    if (frame % TICKSPEED == 0)
+    {
       second++;
       Serial.print("Mem: ");
       Serial.println(ESP.getFreeHeap());
@@ -52,6 +84,11 @@ void StartGame(GFX *graphics)
 void Restart()
 {
   gameOver = false;
+  waitFrames = 0;
+
+  clearedLines = 0;
+  score = 0;
+  softDropCounter = 0;
 
   memset(playfield, 0, PLAYFIELD_WIDTH * PLAYFIELD_HEIGHT);
   presslength = Presslength{
@@ -63,7 +100,9 @@ void Restart()
 
   delete nextTetromino.bitmap;
   nextTetromino = {0};
+
   GetNextTetromino();
+  StartMusic(MUSIC::main);
 }
 
 void GameLoop(uint64_t frame, uint32_t second)
@@ -80,7 +119,7 @@ void GameLoop(uint64_t frame, uint32_t second)
 
   HandleInput(frame);
 
-  if (frame % 35 == 0)
+  if (frame % (GetGravitySpeed(GetLevel(clearedLines))) == 0)
   {
     if (IsValidMove(&currentTetromino.matrix, currentTetromino.x, currentTetromino.y + 1))
       currentTetromino.y += 1;
@@ -88,6 +127,9 @@ void GameLoop(uint64_t frame, uint32_t second)
     {
       // Game over
       gameOver = true;
+
+      StopMusic();
+      PlayEffect(EFFECT::game_over);
     }
   }
 }
@@ -97,7 +139,10 @@ void HandleInput(uint64_t frame)
   if (Ps3.data.button.left)
   {
     if (presslength.left % INPUTSPEED == 0 && IsValidMove(&currentTetromino.matrix, currentTetromino.x - 1, currentTetromino.y))
+    {
       currentTetromino.x -= 1;
+      PlayEffect(EFFECT::move_block);
+    }
     presslength.left++;
   }
   else
@@ -108,7 +153,10 @@ void HandleInput(uint64_t frame)
   if (Ps3.data.button.right)
   {
     if (presslength.right % INPUTSPEED == 0 && IsValidMove(&currentTetromino.matrix, currentTetromino.x + 1, currentTetromino.y))
+    {
       currentTetromino.x += 1;
+      PlayEffect(EFFECT::move_block);
+    }
     presslength.right++;
   }
   else
@@ -118,22 +166,34 @@ void HandleInput(uint64_t frame)
 
   if (Ps3.data.button.down)
   {
-    if (presslength.down % (TICKSPEED / 30) == 0)
+    if (presslength.down >= 0)
     {
-      if (IsValidMove(&currentTetromino.matrix, currentTetromino.x, currentTetromino.y + 1))
-        currentTetromino.y += 1;
-      else
-        PlaceTetromino();
-    }
+      if (presslength.down % (TICKSPEED / 20) == 0)
+      {
+        if (IsValidMove(&currentTetromino.matrix, currentTetromino.x, currentTetromino.y + 1))
+        {
+          softDropCounter += 1;
+          currentTetromino.y += 1;
+        }
+        else
+        {
+          PlaceTetromino();
+          score += softDropCounter;
+          softDropCounter = 0;
+          presslength.down = -20;
+        }
+      }
 
-    presslength.down++;
+      presslength.down++;
+    }
   }
   else
   {
+    softDropCounter = 0;
     presslength.down = 0;
   }
 
-  if (Ps3.data.button.up || Ps3.data.button.cross)
+  if (Ps3.data.button.up || Ps3.data.button.cross || Ps3.data.button.circle)
   {
     if (presslength.spin == 0)
     {
@@ -148,6 +208,7 @@ void HandleInput(uint64_t frame)
       if (IsValidMove(&newTetromino, currentTetromino.x, currentTetromino.y))
       {
         memcpy(currentTetromino.matrix.bitmap, newMatrix, newTetromino.size * newTetromino.size);
+        PlayEffect(EFFECT::rotate_block);
       }
 
       delete newMatrix;
@@ -166,7 +227,8 @@ void GetNextTetromino()
   Tetromino toCurrentTetromino;
   if (nextTetromino.name == 0)
     toCurrentTetromino = CreateClone(tetrominos[esp_random() % TETROMINO_COUNT]);
-  else{
+  else
+  {
     toCurrentTetromino = nextTetromino;
     delete currentTetromino.matrix.bitmap;
   }
@@ -181,6 +243,8 @@ void GetNextTetromino()
   };
 
   nextTetromino = CreateClone(tetrominos[esp_random() % TETROMINO_COUNT]);
+
+  waitFrames += TICKSPEED / 3;
 };
 
 // Dont forget to delete the returned value eventually
@@ -235,6 +299,8 @@ bool PlaceTetromino()
     }
   }
 
+  uint8_t rowsFilled = 0;
+
   for (pos_int_t row = PLAYFIELD_HEIGHT - 1; row >= 0;)
   {
     bool rowFilled = true;
@@ -244,6 +310,7 @@ bool PlaceTetromino()
 
     if (rowFilled)
     {
+      rowsFilled++;
       // Move every row one down
       for (pos_int_t r = row; r > 0; r--)
         for (pos_int_t c = 0; c < PLAYFIELD_WIDTH; c++)
@@ -256,14 +323,31 @@ bool PlaceTetromino()
       row--;
   }
 
+  if (rowsFilled > 4)
+    rowsFilled = 4;
+
+  if (rowsFilled == 0)
+    PlayEffect(EFFECT::block_landing);
+  else
+  {
+    if (rowsFilled < 4)
+      PlayEffect(EFFECT::line_clear);
+    else
+      PlayEffect(EFFECT::tetris_clear);
+
+    clearedLines += rowsFilled;
+    score += PointsPerLineCombo[rowsFilled - 1] * (GetLevel(clearedLines) + 1);
+  }
+
   GetNextTetromino();
 
   return false;
 }
 
-Tetromino CreateClone(Tetromino tetromino){
+Tetromino CreateClone(Tetromino tetromino)
+{
   Tetromino newTetromino = tetromino;
-  
+
   newTetromino.bitmap = new uint8_t[tetromino.size * tetromino.size];
   memcpy(newTetromino.bitmap, tetromino.bitmap, tetromino.size * tetromino.size);
 
@@ -276,16 +360,10 @@ void Draw(uint32_t second)
 
   DrawPlayField();
 
-  DrawCurrentTetromino();
-
-  if (gameOver)
-  {
-    // Replace with gameover logo
-    gfx->drawPixel(MATRIX_SIZE - 1, 0, CRGB::Red);
-  }
+  DrawScores();
 
   // Keepalive pixel
-  gfx->drawPixel(MATRIX_SIZE - 1, MATRIX_SIZE - 1, second % 2 ? CRGB::Red : CRGB::Black);
+  gfx->drawPixel(PLAYFIELD_WIDTH, MATRIX_SIZE - 1, second % 2 ? CRGB::White : CRGB::Gray);
 
   if (gfx->isDirty())
     gfx->show();
@@ -293,12 +371,63 @@ void Draw(uint32_t second)
 
 void DrawPlayField()
 {
-  for (pos_int_t x = 0; x < PLAYFIELD_WIDTH; x++)
-    for (pos_int_t y = 0; y < PLAYFIELD_HEIGHT; y++)
-      gfx->drawPixel(x, y, TetrisColorMap[playfield[x][y]]);
+  if (gameOver)
+  {
+    Serial.println("Go!");
+    gfx->drawLine(0, 0, PLAYFIELD_WIDTH - 1, PLAYFIELD_HEIGHT - 1, CRGB::Red);
+    gfx->drawLine(0, PLAYFIELD_HEIGHT - 1, PLAYFIELD_WIDTH - 1, 0, CRGB::Red);
+  }
+  else
+  {
+    for (pos_int_t x = 0; x < PLAYFIELD_WIDTH; x++)
+      for (pos_int_t y = 0; y < PLAYFIELD_HEIGHT; y++)
+        gfx->drawPixel(x, y, TetrisColorMap[playfield[x][y]]);
+
+    DrawCurrentTetromino();
+  }
 
   gfx->drawLine(PLAYFIELD_WIDTH, 0, PLAYFIELD_WIDTH, PLAYFIELD_HEIGHT - 1, CRGB::White);
-  gfx->drawLine(PLAYFIELD_WIDTH, 5, MATRIX_SIZE - 1, 4, CRGB::White);
+  gfx->drawLine(PLAYFIELD_WIDTH, 2, MATRIX_SIZE - 1, 2, CRGB::White);
+  gfx->drawLine(PLAYFIELD_WIDTH, 6, MATRIX_SIZE - 1, 6, CRGB::White);
+  gfx->drawLine(MATRIX_SIZE - 3, 0, MATRIX_SIZE - 3, 2, CRGB::White);
+}
+
+void DrawScores()
+{
+  uint32_t tempScore = score;
+
+  if (tempScore > 9999999)
+    tempScore = 9999999;
+
+  uint8_t i = 0;
+
+  while (tempScore > 0)
+  {
+    gfx->drawLine(MATRIX_SIZE - 1 - i, MATRIX_SIZE, MATRIX_SIZE - 1 - i, MATRIX_SIZE - (tempScore % 10), CRGB::LawnGreen);
+    tempScore = tempScore / 10;
+    i++;
+  }
+
+  uint16_t level = GetLevel(clearedLines);
+  if (level > 3 * LEVELCOUNT_HEIGHT * LEVELCOUNT_WIDTH)
+    level = 3 * LEVELCOUNT_HEIGHT * LEVELCOUNT_WIDTH;
+
+  for (pos_int_t y = 0; y < LEVELCOUNT_HEIGHT; y++)
+  {
+    for (pos_int_t x = 0; x < LEVELCOUNT_WIDTH; x++)
+    {
+      uint16_t lvlColor = level / (LEVELCOUNT_WIDTH * LEVELCOUNT_HEIGHT);
+      uint16_t levelPart = level % (LEVELCOUNT_WIDTH * LEVELCOUNT_HEIGHT);
+      if ((y * LEVELCOUNT_WIDTH + x + 1) <= levelPart)
+      {
+        gfx->drawPixel(PLAYFIELD_WIDTH + 1 + x, 3 + y, levelColors[lvlColor]);
+      }
+      else if (lvlColor > 0)
+      {
+        gfx->drawPixel(PLAYFIELD_WIDTH + 1 + x, 3 + y, levelColors[lvlColor - 1]);
+      }
+    }
+  }
 }
 
 void DrawCurrentTetromino()
@@ -318,7 +447,7 @@ void DrawCurrentTetromino()
     }
   }
 
-  pos_int_t nextTetrominoOffset = ((MATRIX_SIZE - PLAYFIELD_WIDTH - 1) / 2 - nextTetromino.size / 2) + PLAYFIELD_WIDTH + 1;
+  pos_int_t nextTetrominoOffset = PLAYFIELD_WIDTH + 1;
   for (pos_int_t x = 0; x < nextTetromino.size; x++)
   {
     for (pos_int_t y = 0; y < nextTetromino.size; y++)
@@ -328,9 +457,48 @@ void DrawCurrentTetromino()
       {
         gfx->drawPixel(
             nextTetrominoOffset + x,
-            1 + y,
+            y,
             TetrisColorMap[color]);
       }
     }
   }
+}
+
+uint16_t GetLevel(uint32_t linesCleared)
+{
+  return (linesCleared - (linesCleared % 10)) / 10;
+}
+
+uint8_t GetGravitySpeed(uint16_t level)
+{
+  if (level == 0)
+    return 48;
+  else if (level == 1)
+    return 43;
+  else if (level == 2)
+    return 38;
+  else if (level == 3)
+    return 33;
+  else if (level == 4)
+    return 28;
+  else if (level == 5)
+    return 23;
+  else if (level == 6)
+    return 18;
+  else if (level == 7)
+    return 13;
+  else if (level == 8)
+    return 8;
+  else if (level == 9)
+    return 6;
+  else if (level >= 10 && level <= 12)
+    return 5;
+  else if (level >= 13 && level <= 15)
+    return 4;
+  else if (level >= 16 && level <= 18)
+    return 3;
+  else if (level >= 19 && level <= 28)
+    return 2;
+  else if (level >= 29)
+    return 1;
 }
